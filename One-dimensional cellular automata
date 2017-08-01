@@ -1,0 +1,35 @@
+import pygame
+
+generation,size=200,200
+cut=(1<<size)-1
+
+pygame.init()
+life,death = (255,255,255),(0,0,0)
+a=pygame.Surface((size,generation))
+
+#calculate the next situation as a big number
+#seed,rule are easy to know their meaning
+#log presents how many times should I act
+def next(seed,rule,log):
+	temp=0
+	for i in range(log-2):
+		key=(seed>>i)&7#get the 3 numbers
+		temp|=((rule>>key)&1)<<i
+	return temp
+
+#draw the picture for each rule [0,256)
+for rule in range(256):
+	seed=1<<(size//2+generation)
+	cutR,log=generation,size+generation*2
+	for j in range(generation):
+		temp =(seed>>cutR)&cut
+		for i in range(size):
+			if temp&1: a.set_at((size-i,j),life)
+			else : a.set_at((size-i,j),death)
+			temp>>=1
+		seed=next(seed,rule,log)
+		cutR,log=cutR-1,log-2
+
+	name=str(rule)+'.bmp'
+	pygame.image.save(a,name)#save the picture with the orde
+	print('the %dth has been done'%rule)#hint: it has been done
