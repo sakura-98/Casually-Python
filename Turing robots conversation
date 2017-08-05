@@ -1,0 +1,31 @@
+#! /usr/bin/python3
+
+import re
+import urllib 
+import urllib.request
+
+myapi='8d09233aba8b471ebb100d900e6d9b45'
+
+class Robot(object):
+	apiurl='http://www.tuling123.com/openapi/api?'
+	compiler=re.compile('"text":"(.+)"')
+	def __init__(self,name='unNamed',api=myapi):
+		self.name=name
+		self.api=api
+	def get(self):
+		info=input()
+		self.send(info)
+	def send(self,info):
+		url=self.apiurl+'key='+self.api+'&info='+urllib.parse.quote(info)
+		answer=urllib.request.urlopen(url).read().decode()
+		text=self.compiler.findall(answer)[0]
+		print('%s:%s'%(self.name,text))
+		return text
+
+if __name__ == "__main__":
+	Alice=Robot('Alice')
+	Bob=Robot('Bob',)
+	sentence='初始条件'
+	for i in range(100):
+		sentence=Alice.send(sentence)
+		sentence=Bob.send(sentence)
