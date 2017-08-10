@@ -8,65 +8,49 @@ url='http://www.phy.pku.edu.cn/personnel/faculty.xml'
 ori=urllib.request.urlopen(url).read()
 str=ori.decode('gbk')
 
-file=open('file.csv','w')
+file=open('file.csv','w',newline='')
 writer=csv.writer(file)
 writer.writerow(['姓名','教育背景','研究方向','联系方式','个人主页','办公地点'])
 
 compiler=re.compile('<a href="(.+?)">(.+?)</a>')
 person='http://www.phy.pku.edu.cn/personnel/'
 none=[]
+
+def search(re1,re2,str):
+	try:
+		a=re.findall('<'+re1+'>(.+?)</'+re1+'>',str)[0]#xml
+		return ''.join(re.compile('<a.+?</a>').split(a))#delete super connection
+	except IndexError:
+		pass
+	try:
+		a=re.findall(re2+'(.+?)</li>',str)[0]#html
+		return ''.join(re.compile('<a.+?</a>').split(a))
+	except IndexError:
+		pass
+	return 'UnKnow'
+
 for web,name in compiler.findall(str):
-	if web[0]=='#':
+	if web[0]=='#':#不是合理网址
 		continue
 	fullurl=person+web
 	print(fullurl,' is ready')
 	try:
-		personal=urllib.request.urlopen(fullurl,timeout=2).read()
-	except Exception:
+		personal=urllib.request.urlopen(fullurl).read()
+		if web[-3:]=='xml':
+			personal=personal.decode('GB2312')
+		elif web[-4:]=='html':
+			personal=personal.decode('utf-8')
+		else:#unknow error
+			raise Exception
+	except Exception:#cannot open the page or other error
 		none.append(name)
 		continue
-	if web[-3:]=='xml':
-		personal=personal.decode('gb2312')
-		xml=True
-	elif web[-4:]=='html':
-		personal=personal.decode('utf-8')
-		xml=False
-	try:
-		if xml:
-			a=re.findall('<Education>(.+?)</Education>',personal)[0]
-		else:
-			a=re.findall('教育背景：(.+?)</li>',personal)[0]
-	except IndexError:
-		a='UnKnow'
-	try:
-		if xml:
-			b=re.findall('<Field>(.+?)</Field>',personal)[0]
-		else:
-			b=re.findall('研究方向：(.+?)</li>',personal)[0]
-	except IndexError:
-		b='UnKnow'
-	try:
-		if xml:
-			c=re.findall('<Contact>(.+?)</Contact>',personal)[0]
-		else:
-			c=re.findall('联系方式：(.+?)</li>',personal)[0]
-	except IndexError:
-		c='UnKnow'
-	try:
-		if xml:
-			d=re.findall('<Homepage>(.+?)</Homepage>',personal)[0]
-		else:
-			d=re.findall('个人主页：<a.+?>(.+?)</a></li>',personal)[0]
-	except IndexError:
-		d='UnKnow'
-	try:
-		if xml:
-			e=re.findall('<Office>(.+?)</Office>',personal)[0]
-		else:
-			e=re.findall('办公地点：(.+?)</li>',personal)[0]
-	except IndexError:
-		e='UnKnow'
+	a=search('Education','教育背景：',personal)
+	b=search('Field','研究方向：',personal)
+	c=search('Contact','联系方式：',personal)
+	d=search('Homepage','个人主页：',personal)
+	e=search('Office','办公地点：',personal)
 	writer.writerow([name,a,b,c,d,e])
 
+writer.writerow(['未录入人员:']+none)
 file.close()
-print(none)//因种种原因未能获得，需要手动输入
