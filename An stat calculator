@@ -1,0 +1,229 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+const char doc[]="\
+根据提示，输入字母即可进入相应模式。如输入 w 可添加新数据\n\n\
+w 模式下先输入所需数组组数，然后每行输入一组(两个)数据，用回车键换行，输入完成后自动退回主菜单\n\
+r 模式下先输入需要替换的数据的编号(如1，2，3),然后输入正确数据(一组)\n\
+c 模式下输入需要删除的数据的编号\n\n\
+x(y) 模式下展现单变量的统计数据(和，平均数，标准差)，按任意键返回主菜单\n\
+l 模式下线性拟合结果，a、b为最小二乘法的拟合参数，r为线性因子，绝对值越接近1说明线性越好\n\n\
+h 模式显示此段帮助\n\
+q 为退出程序\n\n\
+此外，退出时会自动保存数据至 result.csv 文件，可用excel打开\n\n\
+编码为 GB2312，windows10 按照道理可以识别。如果无法识别请联系我：yzsu0211@gmail.com\n";
+
+class Point{
+public:
+    Point(float x,float y=0):_x(x),_y(y){next=NULL;}
+    friend class Table;
+private:
+    float _x,_y;
+    Point* next;
+};
+
+class Table{
+public:
+    Table();
+    ~Table();
+    int run();
+    int init();
+private:
+    Point *stat,*rear;
+    int n;//数据个数
+    float sumx,sumy;//和
+    bool made;
+    float ax,ay;//平均数
+    float sx,sy,sxy;//标准差
+    float a,b,r;//线性系数
+
+    //读写操作
+    void write();
+    void replace();
+    void cancel();
+
+    //统计操作
+    void makex();
+    void makey();
+    void line();//求线性系数
+
+    void make();//总操作
+};
+
+Table::Table(){
+    stat=NULL;rear=NULL;
+    n=sumx=sumy=0;
+    made=false;
+}
+
+Table::~Table(){
+    if(!made)make();
+    FILE* out=fopen("result.csv","w");
+    Point* p=NULL;int k=0;
+    fprintf(out,"编号,x,y\n");
+    while(stat){
+        p=stat;
+        fprintf(out,"%d,%f,%f\n",++k,stat->_x,stat->_y);
+        stat=stat->next;delete p;
+    }
+    fprintf(out,"\n和,%f,%f,\n",sumx,sumy);
+    fprintf(out,"平均数,%f,%f\n",ax,ay);
+    fprintf(out,"标准差,%f,%f\n",sx,sy);
+    fprintf(out,"\ny=bx+a\na,b,r\n%f,%f,%f\n",a,b,r);
+    fclose(out);
+}
+
+int Table::run(){
+    char c='o';
+    while(true){
+        init();
+        scanf("%s",&c);
+        switch(c){
+            case 'w':write();break;
+            case 'r':replace();break;
+            case 'c':cancel();break;
+
+            case 'x':makex();system("pause");break;
+            case 'y':makey();system("pause");break;
+            case 'l':line();break;
+
+            case 'q':return 0;
+            case 'h':printf(doc);system("pause");break;
+
+            default:printf("错误输入，已忽略\n");
+        }
+    }
+}
+
+int Table::init(){
+    system("cls");
+    printf("==========================================\n\n");
+    printf("[w]读入数据    [r]替换数据    [c]删除数据\n\n");
+    printf("[x]自变量参数                 [y]因变量参数\n\n");
+    printf("[l]线性拟合    [h]帮助        [q]退出\n\n");
+    printf("==========================================\n\n");
+
+    if(stat){
+        printf("当前数据如下:\n");
+        Point* p=stat;int i=1;
+        printf("编号         x         y\n");
+        while(p){
+            printf("%4d%10.6f%10.6f\n",i,p->_x,p->_y);
+            p=p->next;i++;
+        }
+    }
+    return 0;
+}
+
+void Table::write(){
+    float x,y;
+    int lines;
+    printf("共有数据组数:");scanf("%d",&lines);
+    if(lines<0){printf("请输入非负整数，输入0为取消操作\n");return;}
+    n+=lines;
+    printf("输入x、y 每组数据占一行\n\n");
+    for(;lines;lines--){
+        scanf("%f",&x);
+        if(x==0)return;
+        scanf("%f",&y);
+        if(rear){
+            rear->next=new Point(x,y);
+            rear=rear->next;
+        }
+        else{
+            rear=new Point(x,y);
+            stat=rear;
+        }
+        sumx+=x;sumy+=y;
+    }
+
+    made=false;
+}
+
+void Table::replace(){
+    int k;Point* p=stat;
+    printf("被替换数据编号为：");scanf("%d",&k);
+    if(k>n||k<=0){printf("错误输入!\n");return;}
+    for(k--;k;k--) p=p->next;
+
+    sumx-=p->_x;sumy-=p->_y;
+    printf("输入新的数对:");
+    scanf("%f %f",&(p->_x),&(p->_y));
+    sumx+=p->_x;sumy+=p->_y;
+
+    made=false;
+}
+
+void Table::cancel(){
+    int k;Point *t=stat,*p;//p待删除，t->next==p
+    printf("被删除数据编号为：");scanf("%d",&k);
+    if(k>n||k<=0){printf("错误输入!\n");return;}
+    if(n==1){delete stat;stat=rear=NULL;sumx=sumy=n=0;return;}//只剩一个
+
+    if (k==1){stat=t->next;p=t;t->next=NULL;}//删除首个
+    else if(k==n){p=rear;while(t->next!=rear)t=t->next;rear=t;t->next=NULL;}//删除末个
+    else{
+        for(;k>2;k--) t=t->next;
+        p=t->next;
+        t->next=p->next;//删除完成
+    }
+
+    sumx-=p->_x;sumy-=p->_y;
+    n--;
+    p->next=NULL;delete p;//一些清理工作
+
+    made=false;
+}
+
+void Table::makex(){
+    if(!made)make();
+    printf("自变量和:    %10.6f\n",sumx);
+    printf("自变量平均数:%10.6f\n",ax);
+    printf("自变量标准差:%10.6f\n",sx);
+}
+
+void Table::makey(){
+    if(!made)make();
+    printf("因变量和:    %10.6f\n",sumy);
+    printf("因变量平均数:%10.6f\n",ay);
+    printf("因变量标准差:%10.6f\n",sy);
+}
+
+void Table::line(){
+    if(!made)make();
+    system("cls");
+    printf("y=bx+a\nb=%10.6f\na=%10.6f\nr=%10.6f\n\n",b,a,r);
+    printf("==========================================\n\n");
+    printf("[x]已知x求y    [y]已知y求x    [q]退回主菜单\n\n");
+    printf("==========================================\n\n");
+    char c;float k;
+    scanf("%s",&c);
+    switch(c){
+        case 'x':printf("x=");scanf("%f",&k);printf("y=%10.6f\n",b*k+a);system("pause");line();break;
+        case 'y':printf("y=");scanf("%f",&k);printf("x=%10.6f\n",(k-a)/b);system("pause");line();break;
+        case 'q':break;
+        default:line();
+    }
+}//求线性系数
+
+void Table::make(){
+    ax=sumx/n;ay=sumy/n;//平均数
+    sx=0;sy=0;//标准差
+    float sxy=0,up=-sumx*sumy/n,down=-sumx*sumx/n;//线性拟合辅助量
+    Point *p=stat;
+    while(p){
+        sx+=(ax-p->_x)*(ax-p->_x);sy+=(ay-p->_y)*(ay-p->_y);sxy+=(ax-p->_x)*(ay-p->_y);
+        up+=p->_x*p->_y;down+=p->_x*p->_x;
+        p=p->next;
+    }
+    b=up/down,a=(sumy-b*sumx)/n,r=sxy/sqrt(sx*sy);
+    sx=sqrt(sx/n);sy=sqrt(sy/n);
+    made=true;
+}
+
+int main(){
+    Table c;
+    c.run();
+    return 0;
+}
