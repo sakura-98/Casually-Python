@@ -1,0 +1,49 @@
+MAX=3
+priority ={'+':1,'-':1,'*':2,'/':2}
+
+def fun(x,y,op):
+    if op is '+' : return x+y
+    if op is '-' : return x-y
+    if op is '*' : return x*y
+    if op is '/' : return x/y
+
+def calc_step(s) :
+    #first step:
+    #s may be a number
+    try:
+        return float(s)
+    except Exception:
+        pass
+    #second step :
+    #find the last operation 
+    #and divide the expresion into simpler two
+    global priority,MAX
+    braket = 0
+    sig , pri = 0 , MAX
+    for i in range(len(s)):
+        if s[i] is '(':
+            braket+=1
+        if s[i] is ')':
+            braket-=1
+        if braket :
+            continue
+        try:
+            pp=priority[s[i]]
+            if pp <= pri:
+                op, sig, pri=s[i], i, pp
+        except Exception:
+            pass
+    #return the true answer
+    if pri == MAX: return calc_step(s[1:-1])#remove a braket that include the whole
+    return fun(calc_step(s[:sig]),calc_step(s[sig+1:]),op)
+
+def calc(s):
+    print(calc_step(s))
+
+if __name__ == '__main__':
+    calc('1+2')
+    calc('(1+2)')
+    calc('(1+2)*(3*4)')
+    calc('1+2+3')
+    calc('1+2*3')
+    calc('1*2+3')
