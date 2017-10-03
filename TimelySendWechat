@@ -1,0 +1,58 @@
+#! /usr/bin/python3
+# -*- coding:utf-8 -*-
+import itchat
+import time
+import os
+
+def sends(nicklist,msg,year=0,month=0,day=0,hour=0,minute=0,second=0):
+    if nicklist==[] :
+        return 
+    if type(nicklist)==str:#if there is only one person to be send ,we can use a string to represent it
+        nicklist=[nicklist]
+    sendTime=time.mktime((year,month,day,hour,minute,second,0,0,0))
+    if sendTime<time.time():
+        print('over time!')
+        with open('send_log','a') as file:
+            file.write('fail to send '+','.join(nicklist))
+        return
+    
+    #translate nickname to wechatID
+    tolist=[]
+    itchat.auto_login(hotReload=True,statusStorageDir='itchat.pkl')
+    for nick in nicklist:
+        try:
+            name=itchat.search_friends(nick)[0]['UserName']
+            tolist.append((nick,name))
+            print(nick+' is to be send')
+        except IndexError:
+            with open('send_log','a') as file:
+                file.write(nick+' does not exist!')
+            nicklist.remove(nick)
+    
+    #to avoid auto logout,every five minutes send a message
+    while sendTime-time.time()>300:
+        time.sleep(300)
+        itchat.send(str(time.time()),toUserName='filehelper')
+
+    #to send accurately
+    time.sleep(sendTime-time.time()-1)
+    while(time.time()<sendTime):
+        pass
+
+    #send 
+    for nick,name in tolist:
+        try:
+            itchat.send(msg,toUserName=name)
+        except Exception:
+            continue
+        nicklist.remove(nick)
+        with open('send_log','a') as file:
+            file.write(year+'.'+month+'.'+day+' '+hour+':'+minute+':'+second+' '+nick+' is send message: "'+msg+'"')
+
+    #deal with those who fail to be send
+    sends(nicklist,msg,year,month,day,hour,minute,second)
+
+if __name__ == '__main__':
+    itchat.auto_login(hotReload=True,statusStorageDir='itchat.pkl')
+    sends(['Swag'],'Happy Birthday!\n[This Message is send on time]',(2017,10,4))
+    os.system('poweroff')#I want the computer to shutdown when sending the birthday message
