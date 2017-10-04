@@ -71,7 +71,7 @@ def sends(nicklist,msg,send_time):
             continue
         nicklist.remove(nick)
         with open('send_log','a') as file:
-            file.write(year+'.'+month+'.'+day+' '+hour+':'+minute+':'+second+' '+nick+' is send message: "'+msg+'"')
+            file.write(str(year)+'-'+str(month)+'-'+str(day)+' '+str(hour)+':'+str(minute)+':'+str(second)+' '+nick+' is send message: "'+msg+'"')
 
     #deal with those who fail to be send
     sends(nicklist,msg,year,month,day,hour,minute,second)
