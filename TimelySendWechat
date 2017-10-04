@@ -77,6 +77,5 @@ def sends(nicklist,msg,send_time):
     sends(nicklist,msg,year,month,day,hour,minute,second)
 
 if __name__ == '__main__':
-    itchat.auto_login(hotReload=True,statusStorageDir='itchat.pkl')
     sends(['Swag'],'Happy Birthday!\n[This Message is send on time]',(2017,10,4))
     os.system('poweroff')#I want the computer to shutdown when sending the birthday message
