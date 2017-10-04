@@ -1,10 +1,34 @@
 #! /usr/bin/python3
 # -*- coding:utf-8 -*-
+'it is a helper to send message to your wechat friends on time'
+__author__ = 'SuSu'
+
 import itchat
 import time
 import os
 
-def sends(nicklist,msg,year=0,month=0,day=0,hour=0,minute=0,second=0):
+def sends(nicklist,msg,send_time):
+    '''
+    This function is based on module itchat
+
+    The first argument is the nicknames to be sent.Generally it's a list; if there is only one person, string will also do
+
+    The second argument is msg,which is supposed to be a string
+
+    The third argument is the time to send.It's best a tuple made of (year,month,day,hour,minute,second).Of course,you can ignore the last few arguments. That is,if you use(2020,3), it's equal to (2020,3,1,0,0,0)
+    What's more,the default time is 2000-1-1 0:00:00
+    '''
+    year, month, day, hour, minute, second = 2000, 1, 1, 0, 0, 0
+    try:
+        year=send_time[0]
+        month=send_time[1]
+        day=send_time[2]
+        hour=send_time[3]
+        minute=send_time[4]
+        second=send_time[5]
+    except IndexError:
+        pass
+    
     if nicklist==[] :
         return 
     if type(nicklist)==str:#if there is only one person to be send ,we can use a string to represent it
