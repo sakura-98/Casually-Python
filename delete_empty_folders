@@ -1,0 +1,27 @@
+#! /usr/bin/python3
+# -*- coding:utf-8 -*-
+
+from os import system,listdir
+
+def deleteMe(path):
+    try:
+        listdir(path)
+    except NotADirectoryError:
+        return False
+    except Exception as e:
+        print('Fail to open : '+path+'\n\t Error Information : '+str(e))
+        return False
+
+    CanDelete=True
+    # search sons of it
+    for item in listdir(path):
+        CanDelete&=deleteMe(path+'/'+item)
+    # it is an empty folder or its sons all can be deleted
+    if CanDelete: 
+        system('rm -r '+'\ '.join(path.split(' ')))
+        print('Delete : '+ path)
+        return True
+    return False
+
+if __name__ == "__main__":
+    deleteMe('.')
