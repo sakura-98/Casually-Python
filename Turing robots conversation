@@ -28,6 +28,8 @@ if __name__ == "__main__":
 	Alice=Robot(wechat,'Alice')
 	Bob=Robot(qq,'Bob')
 	sentence=input('起始语句:')
-	for i in range(100):
+	change='raw'
+	while sentence != change:
+		change=sentence
 		sentence=Alice.send(sentence)
 		sentence=Bob.send(sentence)
