@@ -5,7 +5,6 @@ __author__ = 'SuSu'
 
 import itchat
 import time
-import os
 
 def sends(nicklist,msg,send_time):
     '''
@@ -56,7 +55,7 @@ def sends(nicklist,msg,send_time):
     #to avoid auto logout,every five minutes send a message
     while sendTime-time.time()>300:
         time.sleep(300)
-        itchat.send(str(time.time()),toUserName='filehelper')
+        itchat.send(time.ctime(),toUserName='filehelper')
 
     #to send accurately
     time.sleep(sendTime-time.time()-1)
@@ -71,11 +70,14 @@ def sends(nicklist,msg,send_time):
             continue
         nicklist.remove(nick)
         with open('send_log','a') as file:
-            file.write(str(year)+'-'+str(month)+'-'+str(day)+' '+str(hour)+':'+str(minute)+':'+str(second)+' '+nick+' is send message: "'+msg+'"')
-
-    #deal with those who fail to be send
-    sends(nicklist,msg,year,month,day,hour,minute,second)
+            file.write(time.ctime()+' '+nick+' is send message: "'+msg+'"')
 
 if __name__ == '__main__':
-    sends(['Swag'],'Happy Birthday!\n[This Message is send on time]',(2017,10,4))
+    try:
+        sends(['XXX'],'Happy Birthday!\n[This Message is send on time]',(2017,1,11))
+    except Exception as e:
+        with open('send_log','a') as file:
+            file.write('Fail to send because of some Exception: '+str(e))
+    
+    import os.system
     os.system('poweroff')#I want the computer to shutdown when sending the birthday message
