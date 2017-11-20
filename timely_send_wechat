@@ -1,12 +1,47 @@
-#! /usr/bin/python3
-# -*- coding:utf-8 -*-
+#!/usr/bin/env python3
+#! -*- coding=utf-8 -*-
 'it is a helper to send message to your wechat friends on time'
 __author__ = 'SuSu'
 
+import logging
 import itchat
 import time
 
-def sends(nicklist,msg,send_time):
+class SendMaid(object):
+    def __init__(self):
+        itchat.auto_login(hotReload=True)
+        self.__makeLogger()
+
+    def __makeLogger(self):
+        self.logger = logging.getLogger('PythonSend')
+        self.logger.setLevel(logging.DEBUG)
+        self.formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+        #make log to file
+        self.fh = logging.FileHandler('send.log','a')
+        self.fh.setLevel(logging.DEBUG)
+        self.fh.setFormatter(self.formatter)
+        self.logger.addHandler(self.fh)
+
+        #make log to screen
+        self.sh = logging.StreamHandler()
+        self.sh.setLevel(logging.DEBUG)
+        self.sh.setFormatter(self.formatter)
+        self.logger.addHandler(self.sh)
+
+    def __circle(self,send_date):
+        if time.time()+60<send_date:
+            time.sleep(60)
+            itchat.send(time.ctime(),toUserName='filehelper')
+            self.logger.info('to avoid loging out, send to myself on '+time.ctime())
+            self.__circle(send_date)
+        elif time.time()<send_date:
+            time.sleep(send_date-time.time())
+        else:
+            return False
+        return True
+
+    def send(self,to,msg,date): 
     '''
     This function is based on module itchat
 
@@ -15,73 +50,26 @@ def sends(nicklist,msg,send_time):
     The second argument is msg,which is supposed to be a string
 
     The third argument is the time to send.It's best a tuple made of (year,month,day,hour,minute,second).Of course,you can ignore the last few arguments. That is,if you use(2020,3), it's equal to (2020,3,1,0,0,0)
-    What's more,the default time is 2000-1-1 0:00:00
+    What's more,the default time is 0-0-0 0:00:00
     '''
-    year, month, day, hour, minute, second = 2000, 1, 1, 0, 0, 0
-    try:
-        year=send_time[0]
-        month=send_time[1]
-        day=send_time[2]
-        hour=send_time[3]
-        minute=send_time[4]
-        second=send_time[5]
-    except IndexError:
-        pass
-
-    if nicklist==[] :
-        return
-    if type(nicklist)==str:
-        nicklist=[nicklist]
-    sendTime=time.mktime((year,month,day,hour,minute,second,0,0,0))
-    if sendTime<time.time()-60 and nicklist:
-        print('over time!')
-        with open('send_log','a') as file:
-            file.write('fail to send '+','.join(nicklist))
-        return
-
-    #translate nickname to wechatID
-    tolist=[]
-    itchat.auto_login(hotReload=True,statusStorageDir='itchat.pkl')
-    for nick in nicklist:
         try:
-            name=itchat.search_friends(nick)[0]['UserName']
-            tolist.append((nick,name))
-            print(str(year)+'.'+str(month)+'.'+str(day)+' '+str(hour)+':'+str(minute)+':'+str(second)+' '+nick+' will be sent message: "'+msg+'"')
-        except IndexError:
-            with open('send_log','a') as file:
-                file.write(nick+' does not exist!')
-            nicklist.remove(nick)
+            send_date=time.mktime(tuple(date)+(9-len(date))*tuple([0]))
+            send_msg=str(msg)
+            send_to=itchat.search_friends(to)[0]['UserName']
+        except Exception as e:
+            self.logger.error('find an error: '+str(e)+' ; fail to send')
+            return
+        self.logger.info(to+' is to be sent "'+msg+'" on '+ time.ctime(send_date))
 
-    #to avoid auto logout,every five minutes send a message
-    while sendTime-time.time()>301:
-        time.sleep(300)
-        itchat.send(time.ctime(),toUserName='filehelper')
-
-    #to send accurately
-    try:
-        time.sleep(sendTime-time.time()-1)
-    except ValueError:
-        pass
-    while(time.time()<sendTime):
-        pass
-
-    #send 
-    for nick,name in tolist:
-        try:
-            itchat.send(msg,toUserName=name)
-        except Exception:
-            with open('send_log','a') as file:
-                file.write(time.ctime()+' :fail to send message " '+msg+' " to'+nick)
-        nicklist.remove(nick)
-        with open('send_log','a') as file:
-            file.write(time.ctime()+' '+nick+' is sent message: "'+msg+'"')
+        #web wechat will automatically exit if not operated for some time
+        #so I need to send message to myself regularly
+        if self.__circle(send_date):
+            itchat.send(send_msg,toUserName=send_to)
+            self.logger.info(to+' has been sent "'+send_msg+'" on '+time.ctime())
+        else:
+            self.logger.error('invalid time given and fail to send')
 
 if __name__ == '__main__':
-    try:
-        sends(['AAA','BBB','CCC],'Happy New Year!',(2018,1,1))
-    except Exception as e:
-        with open('send_log','a') as file:
-            file.write('meet an error :'+str(e))
-
-    import os
-    os.system('poweroff')
+    me=SendMaid()
+    me.send('XXX','XXX[Send From Python]',(2017,11,20,20,18))
+    me.send('XXX','XXX[Send From Python]',(2017,11,20,20,20))
