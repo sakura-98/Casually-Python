@@ -30,16 +30,17 @@ class SendMaid(object):
         self.logger.addHandler(self.sh)
 
     def __circle(self,send_date):
-        if time.time()+60<send_date:
-            time.sleep(60)
-            itchat.send(time.ctime(),toUserName='filehelper')
-            self.logger.info('to avoid loging out, send to myself on '+time.ctime())
-            self.__circle(send_date)
-        elif time.time()<send_date:
-            time.sleep(send_date-time.time())
-        else:
+        circle_t=300
+        if time.time()>send_date:
             return False
-        return True
+        while True:
+            if time.time()+circle_t<send_date:
+                time.sleep(circle_t-1)
+                itchat.send(time.ctime(),toUserName='filehelper')
+                self.logger.info('to avoid loging out, send to myself on '+time.ctime())
+            else:
+                time.sleep(send_date-time.time())
+                return True
 
     def send(self,to,msg,date): 
     '''
