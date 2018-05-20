@@ -53,24 +53,30 @@ class SendMaid(object):
     The third argument is the time to send.It's best a tuple made of (year,month,day,hour,minute,second).Of course,you can ignore the last few arguments. That is,if you use(2020,3), it's equal to (2020,3,1,0,0,0)
     What's more,the default time is 0-0-0 0:00:00
     '''
+        if type(to)==type("abc"):
+            to = [to]
         try:
             send_date=time.mktime(tuple(date)+(9-len(date))*tuple([0]))
             send_msg=str(msg)
-            send_to=itchat.search_friends(to)[0]['UserName']
+            send_to = {}
+            for t in to:
+                send_to[t] = itchat.search_friends(t)[0]['UserName']
         except Exception as e:
             self.logger.error('find an error: '+str(e)+' ; fail to send')
             return
-        self.logger.info(to+' is to be sent "'+msg+'" on '+ time.ctime(send_date))
+        for t in to:
+            self.logger.info(t+' is to be sent "'+msg+'" on '+ time.ctime(send_date))
 
         #web wechat will automatically exit if not operated for some time
         #so I need to send message to myself regularly
         if self.__circle(send_date):
-            itchat.send(send_msg,toUserName=send_to)
-            self.logger.info(to+' has been sent "'+send_msg+'" on '+time.ctime())
+            for t,n in send_to.items():
+                itchat.send(send_msg,toUserName=n)
+                self.logger.info(t+' has been sent "'+send_msg+'" on '+time.ctime())
         else:
             self.logger.error('invalid time given and fail to send')
 
 if __name__ == '__main__':
     me=SendMaid()
-    me.send('XXX','XXX[Send From Python]',(2017,11,20,20,18))
-    me.send('XXX','XXX[Send From Python]',(2017,11,20,20,20))
+   # me.send('XXX','Test[Send From Python]',(2018,5,20,12,20))
+    me.send(['XXX','XXX'],'Test[Send From Python]',(2018,5,20,12,20))
