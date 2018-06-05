@@ -1,2 +1,13 @@
 # Casually-Python
-using Python to do some little problems. sometimes C++ when I cannot deal with that
+
+使用python实现一点小功能
+
+### 已有功能
+
+1. 微信定时发送
+2. 微信伪集赞截图
+3. 一维元胞自动机（用pygame实现的，什么时候想玩再重写吧）
+4. 简单的统计计算器（用C++写，以便导出exe）
+5. 两个图灵机器人对话
+6. 下载物院教职工信息（做本研搜集信息用的）
+7. 其他不敢写出来的
