@@ -1,8 +1,8 @@
 #! /usr/bin/python3
 
-import re
-import urllib 
 import urllib.request
+import urllib.parse
+import json
 
 #我自己申请两个api
 wechat='8d09233aba8b471ebb100d900e6d9b45'
@@ -10,7 +10,6 @@ qq='81298b9301e44ec7831153f0bed33bd9'
 
 class Robot(object):
 	apiurl='http://www.tuling123.com/openapi/api?'
-	compiler=re.compile('"text":"(.+)"')
 	def __init__(self,api,name='unNamed'):
 		self.api=api
 		self.name=name
@@ -19,8 +18,8 @@ class Robot(object):
 		self.send(info)
 	def send(self,info):
 		url=self.apiurl+'key='+self.api+'&info='+urllib.parse.quote(info)#编排正确网址
-		answer=urllib.request.urlopen(url).read().decode()
-		text=self.compiler.findall(answer)[0]#获取text条目
+		answer=urllib.request.urlopen(url)
+		text=json.load(answer)['text']#获取text条目
 		print('%s:%s'%(self.name,text))
 		return text
 
