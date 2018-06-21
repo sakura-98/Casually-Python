@@ -36,25 +36,36 @@ def couple(l1,l2):
     j2 = np.dot(jx,jx)+np.dot(jy,jy)+np.dot(jz,jz)
     return np.real(jz), np.real(j2)
 
-def common(l1,l2):
+def CG(l1,l2):
     '''
     calculate the common eigenvectors
     '''
     jz,j2 = couple(l1,l2)
     err = 1e-10
-    a,s,b = np.linalg.svd(j2)
-    tmp = np.dot(jz,a)/a
+    s,a = np.linalg.eig(j2)
+    # for i in range(len(a)):
+        # for j in range(len(a[0])):
+            # if abs(a[i][j])<err:
+                # a[i][j]=0
+    tmpz = np.dot(jz,a)/(a+1e-20)
     for i in range(len(a)):
-        sq = int(np.sqrt(s[i]))
-        z = next((k for k in tmp[:,i] if not np.isnan(k)))
+        sz = list(set(['%.1f'%k for k in tmpz[:,i] if abs(k)>err]))
+        s2 = np.sqrt(0.25+s[i])-0.5
+        if len(sz) == 0:
+            sz = 0
+        elif len(sz) == 1:
+            sz = sz[0]
+        else:
+            print('there is something wrong !J=%.1f,M in %s'%(s2,sz))
+            continue 
         vec = ''
-        for index,item in enumerate(b[i]):
+        for index,item in enumerate(a[:,i]):
             if abs(item)>err:
-                vec += '%s√(%f)|%d>|%d>'%({True:'+',False:'-'}[item>0],item**2,l1-index//(2*l2+1),l2-index%(2*l2+1))
-        print('J=%d,M=%d,vec=%s\n'%(sq,z,vec))
+                vec += '%s√(%.5f)|%s>|%s>'%({True:'+',False:'-'}[item>0],item**2,l1-index//(2*l2+1),l2-index%(2*l2+1))
+        print('J=%.1f,M=%s,vec=%s'%(s2,sz,vec))
 
 if __name__ == '__main__':
-  common(1,1)
+  CG(1,1)
   #output:
   #J=2,M=0,vec=+√(0.166667)|1>|-1>+√(0.666667)|0>|0>+√(0.166667)|-1>|1>
   #
